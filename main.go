@@ -52,10 +52,8 @@ func main() {
 		if err != nil {
 			log.Panicln(err)
 		}
-		fmt.Println(ip)
+		setImages(ip)
 	}
-
-	//setImages("130.127.218.152")
 
 }
 
