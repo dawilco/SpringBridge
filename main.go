@@ -85,15 +85,14 @@ func setImages(ip string, thisWait *sync.WaitGroup) {
 		random := rand.Intn(len(files))
 		fmt.Println(files[random])
 		index := strconv.Itoa(i)
-		wg.Add(1)
-		go writeImage(client, "http://"+ip+"/api/config/splashbackground/"+index, files[random], &wg)
+		writeImage(client, "http://"+ip+"/api/config/splashbackground/"+index, files[random])
 		files = slicePop(files, random)
+		time.Sleep(time.Millisecond * 10)
 	}
-	wg.Wait()
 	thisWait.Done()
 }
 
-func writeImage(client *http.Client, url string, filePath string, wg *sync.WaitGroup) {
+func writeImage(client *http.Client, url string, filePath string) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		fmt.Println(err)
@@ -109,20 +108,17 @@ func writeImage(client *http.Client, url string, filePath string, wg *sync.WaitG
 	fieldWriter, err := multiPartWriter.CreateFormFile("file", fileName[1])
 	if err != nil {
 		fmt.Println("****ERROR ENCOUNTERED CONTINUING****", err)
-		wg.Done()
 		return
 	}
 
 	_, err = io.Copy(fieldWriter, file)
 	if err != nil {
 		fmt.Println("****ERROR ENCOUNTERED CONTINUING****", err)
-		wg.Done()
 		return
 	}
 	_, err = fieldWriter.Write([]byte("Value"))
 	if err != nil {
 		fmt.Println("****ERROR ENCOUNTERED CONTINUING****", err)
-		wg.Done()
 		return
 	}
 
@@ -131,7 +127,6 @@ func writeImage(client *http.Client, url string, filePath string, wg *sync.WaitG
 	req, err := http.NewRequest("POST", url, &requestBody)
 	if err != nil {
 		fmt.Println("****ERROR ENCOUNTERED CONTINUING****", err)
-		wg.Done()
 		return
 	}
 	req.Header.Set("Content-Type", multiPartWriter.FormDataContentType())
@@ -139,7 +134,6 @@ func writeImage(client *http.Client, url string, filePath string, wg *sync.WaitG
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println("****ERROR ENCOUNTERED CONTINUING****", err)
-		wg.Done()
 		return
 	}
 	body, err := ioutil.ReadAll(resp.Body)
