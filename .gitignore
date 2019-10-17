@@ -1,3 +1,4 @@
 img/*.*
 SpringBridge
 .DS_Store
+config.json
