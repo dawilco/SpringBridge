@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -46,18 +47,22 @@ func main() {
 	rows, _ := db.Query(configuration.MySQLQuery)
 	defer rows.Close()
 
+	var wg sync.WaitGroup
+
 	for rows.Next() {
 		var ip string
 		err := rows.Scan(&ip)
 		if err != nil {
 			log.Panicln(err)
 		}
-		setImages(ip)
+		wg.Add(1)
+		go setImages(ip, &wg)
+		time.Sleep(time.Millisecond * 50)
 	}
-
+	wg.Wait()
 }
 
-func setImages(ip string) {
+func setImages(ip string, thisWait *sync.WaitGroup) {
 	fmt.Println("posting ", ip)
 	client := &http.Client{}
 	var files []string
@@ -71,18 +76,22 @@ func setImages(ip string) {
 	}
 	files = slicePop(files, 0)
 
+	var wg sync.WaitGroup
+
 	for i := 0; i < numberImages; i++ {
 		rand.Seed(time.Now().UnixNano())
 		random := rand.Intn(len(files))
 		fmt.Println(files[random])
 		index := strconv.Itoa(i)
-		writeImage(client, "http://"+ip+"/api/config/splashbackground/"+index, files[random])
+		wg.Add(1)
+		go writeImage(client, "http://"+ip+"/api/config/splashbackground/"+index, files[random], &wg)
 		files = slicePop(files, random)
 	}
-
+	wg.Wait()
+	thisWait.Done()
 }
 
-func writeImage(client *http.Client, url string, filePath string) {
+func writeImage(client *http.Client, url string, filePath string, wg *sync.WaitGroup) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		panic(err)
@@ -119,11 +128,13 @@ func writeImage(client *http.Client, url string, filePath string) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		panic(err)
+		fmt.Println("****ERROR ENCOUNTERED CONTINUING****", err)
 	}
 	body, err := ioutil.ReadAll(resp.Body)
 	bodyString := string(body)
 	fmt.Println(bodyString)
+
+	wg.Done()
 }
 
 func slicePop(slice []string, index int) []string {
