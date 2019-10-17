@@ -31,6 +31,8 @@ var configuration struct {
 	MySQLQuery     string
 }
 
+var retry []string
+
 func main() {
 	//filename is the path to the json config file
 	file, err := os.Open("config.json")
@@ -107,15 +109,21 @@ func writeImage(client *http.Client, url string, filePath string, wg *sync.WaitG
 	fieldWriter, err := multiPartWriter.CreateFormFile("file", fileName[1])
 	if err != nil {
 		fmt.Println("****ERROR ENCOUNTERED CONTINUING****", err)
+		wg.Done()
+		return
 	}
 
 	_, err = io.Copy(fieldWriter, file)
 	if err != nil {
 		fmt.Println("****ERROR ENCOUNTERED CONTINUING****", err)
+		wg.Done()
+		return
 	}
 	_, err = fieldWriter.Write([]byte("Value"))
 	if err != nil {
 		fmt.Println("****ERROR ENCOUNTERED CONTINUING****", err)
+		wg.Done()
+		return
 	}
 
 	multiPartWriter.Close()
@@ -123,12 +131,16 @@ func writeImage(client *http.Client, url string, filePath string, wg *sync.WaitG
 	req, err := http.NewRequest("POST", url, &requestBody)
 	if err != nil {
 		fmt.Println("****ERROR ENCOUNTERED CONTINUING****", err)
+		wg.Done()
+		return
 	}
 	req.Header.Set("Content-Type", multiPartWriter.FormDataContentType())
 
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println("****ERROR ENCOUNTERED CONTINUING****", err)
+		wg.Done()
+		return
 	}
 	body, err := ioutil.ReadAll(resp.Body)
 	bodyString := string(body)
