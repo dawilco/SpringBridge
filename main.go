@@ -35,12 +35,12 @@ func main() {
 	//filename is the path to the json config file
 	file, err := os.Open("config.json")
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 	}
 	decoder := json.NewDecoder(file)
 	err = decoder.Decode(&configuration)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 	}
 	db, _ := sql.Open("mysql", configuration.MySQLUser+":"+configuration.MySQLPassoword+"@("+configuration.MySQLHost+")/"+configuration.MySQLDB)
 
@@ -72,7 +72,7 @@ func setImages(ip string, thisWait *sync.WaitGroup) {
 		return nil
 	})
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 	}
 	files = slicePop(files, 0)
 
@@ -94,7 +94,7 @@ func setImages(ip string, thisWait *sync.WaitGroup) {
 func writeImage(client *http.Client, url string, filePath string, wg *sync.WaitGroup) {
 	file, err := os.Open(filePath)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 	}
 	defer file.Close()
 
@@ -106,23 +106,23 @@ func writeImage(client *http.Client, url string, filePath string, wg *sync.WaitG
 
 	fieldWriter, err := multiPartWriter.CreateFormFile("file", fileName[1])
 	if err != nil {
-		panic(err)
+		fmt.Println("****ERROR ENCOUNTERED CONTINUING****", err)
 	}
 
 	_, err = io.Copy(fieldWriter, file)
 	if err != nil {
-		panic(err)
+		fmt.Println("****ERROR ENCOUNTERED CONTINUING****", err)
 	}
 	_, err = fieldWriter.Write([]byte("Value"))
 	if err != nil {
-		panic(err)
+		fmt.Println("****ERROR ENCOUNTERED CONTINUING****", err)
 	}
 
 	multiPartWriter.Close()
 
 	req, err := http.NewRequest("POST", url, &requestBody)
 	if err != nil {
-		panic(err)
+		fmt.Println("****ERROR ENCOUNTERED CONTINUING****", err)
 	}
 	req.Header.Set("Content-Type", multiPartWriter.FormDataContentType())
 
