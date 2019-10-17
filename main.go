@@ -78,8 +78,6 @@ func setImages(ip string, thisWait *sync.WaitGroup) {
 	}
 	files = slicePop(files, 0)
 
-	var wg sync.WaitGroup
-
 	for i := 0; i < numberImages; i++ {
 		rand.Seed(time.Now().UnixNano())
 		random := rand.Intn(len(files))
@@ -139,8 +137,6 @@ func writeImage(client *http.Client, url string, filePath string) {
 	body, err := ioutil.ReadAll(resp.Body)
 	bodyString := string(body)
 	fmt.Println(bodyString)
-
-	wg.Done()
 }
 
 func slicePop(slice []string, index int) []string {
