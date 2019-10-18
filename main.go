@@ -31,7 +31,7 @@ var configuration struct {
 	MySQLQuery     string
 }
 
-var retry []string
+var errors []string
 
 func main() {
 	//filename is the path to the json config file
@@ -62,14 +62,24 @@ func main() {
 		time.Sleep(time.Millisecond * 50)
 	}
 	wg.Wait()
+	for ip := range errors {
+		fmt.Println("Couldn't connect to: ", ip)
+	}
 }
 
 func setImages(ip string, thisWait *sync.WaitGroup) {
+	_, err := http.Get("http://" + ip + "/api/config")
+	if err != nil {
+		errors = append(errors, ip)
+		thisWait.Done()
+		return
+	}
+
 	fmt.Println("posting ", ip)
 	client := &http.Client{}
 	var files []string
 	root := "img"
-	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+	err = filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		files = append(files, path)
 		return nil
 	})
