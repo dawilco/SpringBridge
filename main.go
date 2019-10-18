@@ -62,7 +62,7 @@ func main() {
 		time.Sleep(time.Millisecond * 50)
 	}
 	wg.Wait()
-	for ip := range errors {
+	for _, ip := range errors {
 		fmt.Println("Couldn't connect to: ", ip)
 	}
 }
@@ -95,7 +95,7 @@ func setImages(ip string, thisWait *sync.WaitGroup) {
 		index := strconv.Itoa(i)
 		writeImage(client, "http://"+ip+"/api/config/splashbackground/"+index, files[random])
 		files = slicePop(files, random)
-		time.Sleep(time.Millisecond * 10)
+		time.Sleep(time.Millisecond * 25)
 	}
 	thisWait.Done()
 }
@@ -115,18 +115,18 @@ func writeImage(client *http.Client, url string, filePath string) {
 
 	fieldWriter, err := multiPartWriter.CreateFormFile("file", fileName[1])
 	if err != nil {
-		fmt.Println("****ERROR ENCOUNTERED CONTINUING****", err)
+		fmt.Println("****ERROR Could not create request****", err)
 		return
 	}
 
 	_, err = io.Copy(fieldWriter, file)
 	if err != nil {
-		fmt.Println("****ERROR ENCOUNTERED CONTINUING****", err)
+		fmt.Println("****ERROR couldnt copy file****", err)
 		return
 	}
 	_, err = fieldWriter.Write([]byte("Value"))
 	if err != nil {
-		fmt.Println("****ERROR ENCOUNTERED CONTINUING****", err)
+		fmt.Println("****ERROR couldnt write file****", err)
 		return
 	}
 
@@ -134,14 +134,14 @@ func writeImage(client *http.Client, url string, filePath string) {
 
 	req, err := http.NewRequest("POST", url, &requestBody)
 	if err != nil {
-		fmt.Println("****ERROR ENCOUNTERED CONTINUING****", err)
+		fmt.Println("****ERROR could not create reqiest****", err)
 		return
 	}
 	req.Header.Set("Content-Type", multiPartWriter.FormDataContentType())
 
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println("****ERROR ENCOUNTERED CONTINUING****", err)
+		fmt.Println("****ERROR coudn't do request****", err)
 		return
 	}
 	body, err := ioutil.ReadAll(resp.Body)
